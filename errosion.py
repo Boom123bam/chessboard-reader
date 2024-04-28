@@ -16,6 +16,7 @@ title_dilation_window = "Dilation Demo"
 def main(image):
     global src
     src = cv.imread("pic-good.jpg")
+    # src = cv.imread("board.png")
     cv.namedWindow(title_erosion_window)
     cv.createTrackbar(
         title_trackbar_element_shape, title_erosion_window, 0, max_elem, erosion
