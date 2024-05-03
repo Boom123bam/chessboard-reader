@@ -2,3 +2,4 @@ classify-pieces/dataset
 classify-pieces/runs
 temp.*
 generated/*
+.DS_Store
