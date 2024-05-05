@@ -78,13 +78,16 @@ def prune_non_equally_spaced(peaks):
 
 
 def find_chessboard(img):
+    # grayscale
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
     # rescale and blur
     width = 750
     height = 750
-    resized = cv2.resize(img, (width, height), interpolation=cv2.INTER_AREA)
+    img = cv2.resize(img, (width, height), interpolation=cv2.INTER_AREA)
     # img = cv2.GaussianBlur(img, (5, 5), 0)
 
-    img = opening(resized, 3)
+    img = opening(img, 3)
     img = closing(img, 5)
     # img = cv2.medianBlur(img, 5)
     sobY = sobelY(img)
@@ -189,15 +192,15 @@ def find_chessboard(img):
 
     # Find peaks
 
-    dx_peaks, properties = find_peaks(
-        hough_dx, distance=30, height=np.max(hough_dx) / 10
-    )
+    dx_peaks, _ = find_peaks(hough_dx, distance=30, height=np.max(hough_dx) / 10)
     dy_peaks, _ = find_peaks(hough_dy, distance=30, height=np.max(hough_dy) / 10)
 
     dx_peaks = prune_non_equally_spaced(dx_peaks)
     dy_peaks = prune_non_equally_spaced(dy_peaks)
 
-    assert len(dx_peaks) == 7 and len(dy_peaks) == 7, "chessboard not found"
+    # assert len(dx_peaks) == 7 and len(dy_peaks) == 7, "chessboard not found"
+    if len(dx_peaks) != 7 or len(dy_peaks) != 7:
+        return False, None, None
 
     # Estimate first and last lines
 
@@ -225,4 +228,4 @@ def find_chessboard(img):
     board_y_lines = board_y_lines.astype(np.float64)
     board_y_lines /= 750
 
-    return board_x_lines, board_y_lines
+    return True, board_x_lines, board_y_lines
