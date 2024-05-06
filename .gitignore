@@ -3,6 +3,7 @@ classify-pieces/runs
 temp.*
 generated/*
 .DS_Store
+temp-board/*
 
 # https://github.com/github/gitignore/blob/main/Python.gitignore
 # Byte-compiled / optimized / DLL files
