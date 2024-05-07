@@ -4,6 +4,7 @@ temp.*
 generated/*
 .DS_Store
 temp-board/*
+test-images/*
 
 # https://github.com/github/gitignore/blob/main/Python.gitignore
 # Byte-compiled / optimized / DLL files
