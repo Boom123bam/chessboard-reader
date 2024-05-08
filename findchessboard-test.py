@@ -1,0 +1,1 @@
+from findchessboard import find_chessboard
