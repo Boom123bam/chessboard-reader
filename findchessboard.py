@@ -104,36 +104,6 @@ def find_chessboard(original_img, saveTiles):
     linesHorizontal = cv2.HoughLines(sobXBinary, 1, np.pi / 180, 150, None, 0, 0)
     linesVertical = cv2.HoughLines(sobYBinary, 1, np.pi / 180, 150, None, 0, 0)
 
-    # Color for showing lines
-    cdstX = cv2.cvtColor(sobXBinary, cv2.COLOR_GRAY2BGR)
-    cdstY = cv2.cvtColor(sobYBinary, cv2.COLOR_GRAY2BGR)
-
-    if linesHorizontal is not None:
-        for i in range(0, len(linesHorizontal)):
-            rho = linesHorizontal[i][0][0]
-            theta = linesHorizontal[i][0][1]
-            a = math.cos(theta)
-            b = math.sin(theta)
-            x0 = a * rho
-            y0 = b * rho
-            pt1 = (int(x0 + 1000 * (-b)), int(y0 + 1000 * (a)))
-            pt2 = (int(x0 - 1000 * (-b)), int(y0 - 1000 * (a)))
-
-            cv2.line(cdstX, pt1, pt2, (0, 0, 255), 3, cv2.LINE_AA)
-
-    if linesVertical is not None:
-        for i in range(0, len(linesVertical)):
-            rho = linesVertical[i][0][0]
-            theta = linesVertical[i][0][1]
-            a = math.cos(theta)
-            b = math.sin(theta)
-            x0 = a * rho
-            y0 = b * rho
-            pt1 = (int(x0 + 1000 * (-b)), int(y0 + 1000 * (a)))
-            pt2 = (int(x0 - 1000 * (-b)), int(y0 - 1000 * (a)))
-
-            cv2.line(cdstY, pt1, pt2, (0, 0, 255), 3, cv2.LINE_AA)
-
     # Find the average rotation
     angle_threshold = 0.1
     sum = 0
@@ -178,25 +148,46 @@ def find_chessboard(original_img, saveTiles):
     dy_neg = np.clip(sobY, -255, 0)
 
     dx_pos_sum = np.sum(dx_pos, axis=1)
-    dx_pos_sum = np.clip(dx_pos_sum, 0, np.max(dx_pos_sum) / 3)
     dx_neg_sum = np.sum(-dx_neg, axis=1)
-    dx_neg_sum = np.clip(dx_neg_sum, 0, np.max(dx_neg_sum) / 3)
 
     dy_pos_sum = np.sum(dy_pos, axis=0)
-    dy_pos_sum = np.clip(dy_pos_sum, 0, np.max(dy_pos_sum) / 3)
     dy_neg_sum = np.sum(-dy_neg, axis=0)
-    dy_neg_sum = np.clip(dy_neg_sum, 0, np.max(dy_neg_sum) / 3)
+
+    dx_pos_sum = np.clip(dx_pos_sum, 0, np.max(dx_pos_sum) / 2)
+    dx_neg_sum = np.clip(dx_neg_sum, 0, np.max(dx_neg_sum) / 2)
+    dy_pos_sum = np.clip(dy_pos_sum, 0, np.max(dy_pos_sum) / 2)
+    dy_neg_sum = np.clip(dy_neg_sum, 0, np.max(dy_neg_sum) / 2)
+
+    dx_pos_sum[dx_pos_sum < np.max(dx_pos_sum) / 10] = 0
+    dx_neg_sum[dx_neg_sum < np.max(dx_neg_sum) / 10] = 0
+    dy_pos_sum[dy_pos_sum < np.max(dy_pos_sum) / 10] = 0
+    dy_neg_sum[dy_neg_sum < np.max(dy_neg_sum) / 10] = 0
 
     hough_dx = dx_pos_sum * dx_neg_sum
     hough_dy = dy_pos_sum * dy_neg_sum
 
     # Find peaks
 
-    dx_peaks, _ = find_peaks(hough_dx, distance=30, height=np.max(hough_dx) / 10)
-    dy_peaks, _ = find_peaks(hough_dy, distance=30, height=np.max(hough_dy) / 10)
+    dx_peaks, _ = find_peaks(hough_dx, distance=30, height=np.max(hough_dx) / 8)
+    dy_peaks, _ = find_peaks(hough_dy, distance=30, height=np.max(hough_dy) / 8)
 
     dx_peaks = prune_non_equally_spaced(dx_peaks)
     dy_peaks = prune_non_equally_spaced(dy_peaks)
+
+    # if more than 7 peaks, prune the smallest if it is the first or last peak
+    lowest_dy_peak_index = np.argmin(hough_dy[dy_peaks])
+    while len(dy_peaks) > 7 and (
+        lowest_dy_peak_index == 0 or lowest_dy_peak_index == len(dy_peaks) - 1
+    ):
+        dy_peaks = np.delete(dy_peaks, lowest_dy_peak_index)
+        lowest_dy_peak_index = np.argmin(hough_dy[dy_peaks])
+
+    lowest_dx_peak_index = np.argmin(hough_dx[dx_peaks])
+    while len(dx_peaks) > 7 and (
+        lowest_dx_peak_index == 0 or lowest_dx_peak_index == len(dx_peaks) - 1
+    ):
+        dx_peaks = np.delete(dx_peaks, lowest_dx_peak_index)
+        lowest_dx_peak_index = np.argmin(hough_dx[dx_peaks])
 
     # assert len(dx_peaks) == 7 and len(dy_peaks) == 7, "chessboard not found"
     if len(dx_peaks) != 7 or len(dy_peaks) != 7:
