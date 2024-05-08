@@ -1,8 +1,9 @@
 from findchessboard import find_chessboard
-from processboard import splitBoard, classifyPieces, generateFen
-from flask import Flask, request, jsonify
+from processboard import classifyPieces, generateFen
+from flask import Flask, request, jsonify, send_file
 import numpy as np
 import cv2
+import io
 
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
 
@@ -32,14 +33,16 @@ def get_chessboard():
             image_array = np.frombuffer(image_file.read(), np.uint8)
             image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
             # Perform chessboard detection
-            found, a, b = find_chessboard(image)
-            if found:
-                return jsonify({"success": True, "a": a.tolist(), "b": b.tolist()}), 200
+            board_img = find_chessboard(image, False)
+            if board_img is not None:
+                # Convert the image to bytes
+                retval, buffer = cv2.imencode(".jpg", board_img)
+                img_bytes = buffer.tobytes()
+
+                # Return the image
+                return send_file(io.BytesIO(img_bytes), mimetype="image/jpeg")
             else:
-                return (
-                    jsonify({"success": False, "message": "No chessboard found"}),
-                    404,
-                )
+                return "No board found"
         else:
             return jsonify({"error": "File type not allowed"}), 400
 
@@ -75,14 +78,13 @@ def get_fen():
         image_array = np.frombuffer(image_file.read(), np.uint8)
         image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
         # Perform chessboard detection
-        found, xl, yl = find_chessboard(image)
-        if not found:
+        board = find_chessboard(image, True)
+        if board is None:
             return (
                 jsonify({"success": False, "message": "No chessboard found"}),
                 404,
             )
 
-        splitBoard(image, xl, yl)
         pieces = classifyPieces()
         return jsonify({"success": True, "fen": generateFen(pieces)}), 200
 

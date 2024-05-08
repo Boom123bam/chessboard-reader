@@ -1,7 +1,7 @@
 import cv2
 from ultralytics import YOLO
 
-model = YOLO("flask-api/best.pt", task="predict", verbose=False)
+model = YOLO("best.pt", task="predict", verbose=False)
 
 
 def classifyPieces():
@@ -15,22 +15,6 @@ def classifyPieces():
     assert len(pieces) == 64, "Number of images must be 64"
 
     return pieces
-
-
-def splitBoard(boardImg, xLines, yLines):
-    w, h, _ = boardImg.shape
-    # tiles = []
-
-    i = 0
-    for x in range(8):
-        for y in range(8):
-            x1 = round(xLines[x] * w)
-            x2 = round(xLines[x + 1] * w)
-            y1 = round(yLines[y] * h)
-            y2 = round(yLines[y + 1] * h)
-            cv2.imwrite(f"temp-board/{'{:02d}'.format(i)}.png", boardImg[x1:x2, y1:y2])
-            # tiles.append(boardImg[x1:x2, y1:y2])
-            i += 1
 
 
 def generateFen(pieces):
@@ -56,5 +40,5 @@ def generateFen(pieces):
 # img = cv2.imread("test-images/respawn.png")
 # ok, xl, yl = find_chessboard(img)
 # splitBoard(img, xl, yl)
-pieces = classifyPieces()
-print(generateFen(pieces))
+# pieces = classifyPieces()
+# print(generateFen(pieces))

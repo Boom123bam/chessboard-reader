@@ -25,10 +25,10 @@ for filename in os.listdir(badfolder):
         continue
 
     image = cv2.imread(file_path)
-    ok, xl, yl = find_chessboard(image)
+    board = find_chessboard(image, False)
 
-    if ok:
-        print(file_path, f"Expected no chessboard, got: {xl}, {yl}")
+    if board is not None:
+        print(file_path, f"Expected no chessboard, but got one")
         falsePos += 1
     else:
         trueNeg += 1
@@ -40,9 +40,9 @@ for filename in os.listdir(goodfolder):
         continue
 
     image = cv2.imread(file_path)
-    ok, xl, yl = find_chessboard(image)
+    board = find_chessboard(image, True)
 
-    if not ok:
+    if board is None:
         print(file_path, f"Expected chessboard, got none")
         falseNeg += 1
     else:

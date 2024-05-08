@@ -40,7 +40,7 @@ def toAbs(img):
 
 
 def rotate(img, angle):
-    rows, cols = img.shape
+    rows, cols = img.shape[0], img.shape[1]
     # cols-1 and rows-1 are the coordinate limits.
     M = cv2.getRotationMatrix2D(((cols - 1) / 2.0, (rows - 1) / 2.0), angle, 1)
     return cv2.warpAffine(img, M, (cols, rows))
@@ -77,9 +77,9 @@ def prune_non_equally_spaced(peaks):
     return peaks[start : end + 2]
 
 
-def find_chessboard(img):
+def find_chessboard(original_img, saveTiles):
     # grayscale
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    img = cv2.cvtColor(original_img, cv2.COLOR_BGR2GRAY)
 
     # rescale and blur
     width = 750
@@ -166,7 +166,7 @@ def find_chessboard(img):
     if abs(avg_rotation) > 0.01:
         sobX = rotate(sobX, avg_rotation * 180 / math.pi)
         sobY = rotate(sobY, avg_rotation * 180 / math.pi)
-        # resized = rotate(resized, avg_rotation * 180 / math.pi)
+        original_img = rotate(original_img, avg_rotation * 180 / math.pi)
 
     # Separate gradients to + and -
 
@@ -200,7 +200,7 @@ def find_chessboard(img):
 
     # assert len(dx_peaks) == 7 and len(dy_peaks) == 7, "chessboard not found"
     if len(dx_peaks) != 7 or len(dy_peaks) != 7:
-        return False, None, None
+        return None
 
     # Estimate first and last lines
 
@@ -224,8 +224,29 @@ def find_chessboard(img):
 
     # normalize
     board_x_lines = board_x_lines.astype(np.float64)
-    board_x_lines /= 750
+    board_x_lines /= width
     board_y_lines = board_y_lines.astype(np.float64)
-    board_y_lines /= 750
+    board_y_lines /= height
 
-    return True, board_x_lines, board_y_lines
+    w, h, _ = original_img.shape
+    x1 = round(board_x_lines[0] * w)
+    x2 = round(board_x_lines[-1] * w)
+    y1 = round(board_y_lines[0] * h)
+    y2 = round(board_y_lines[-1] * h)
+    result = original_img[x1:x2, y1:y2]
+
+    if saveTiles:
+        i = 0
+        for x in range(8):
+            for y in range(8):
+                x1 = round(board_x_lines[x] * w)
+                x2 = round(board_x_lines[x + 1] * w)
+                y1 = round(board_y_lines[y] * h)
+                y2 = round(board_y_lines[y + 1] * h)
+                cv2.imwrite(
+                    f"temp-board/{'{:02d}'.format(i)}.png", original_img[x1:x2, y1:y2]
+                )
+                # tiles.append(boardImg[x1:x2, y1:y2])
+                i += 1
+
+    return result
