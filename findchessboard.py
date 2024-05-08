@@ -166,7 +166,7 @@ def find_chessboard(img):
     if abs(avg_rotation) > 0.01:
         sobX = rotate(sobX, avg_rotation * 180 / math.pi)
         sobY = rotate(sobY, avg_rotation * 180 / math.pi)
-        resized = rotate(resized, avg_rotation * 180 / math.pi)
+        # resized = rotate(resized, avg_rotation * 180 / math.pi)
 
     # Separate gradients to + and -
 
