@@ -72,7 +72,7 @@ def prune_non_equally_spaced(peaks):
     gapsdiffs = np.diff(gaps)
     # find longest seqence of small diffs
     start, end = find_longest_chain(
-        gapsdiffs, lambda x: abs(x) < 3
+        gapsdiffs, lambda x: abs(x) < 5
     )  # allow 3px error in both directions
     return peaks[start : end + 2]
 
